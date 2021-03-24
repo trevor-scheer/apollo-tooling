@@ -19,11 +19,12 @@ import {
 } from "vscode-languageserver";
 
 // should eventually be moved into this package, since we're overriding a lot of the existing behavior here
-import { getAutocompleteSuggestions } from "graphql-language-service-interface";
 import {
+  getAutocompleteSuggestions ,
   getTokenAtPosition,
-  getTypeInfo
+  getTypeInfo,
 } from "graphql-language-service-interface";
+import { IPosition } from "graphql-language-service-types";
 import { GraphQLWorkspace } from "./workspace";
 import { DocumentUri } from "./project/base";
 
@@ -128,7 +129,7 @@ export class GraphQLLanguageProvider {
     const positionInDocument = positionFromPositionInContainingDocument(
       document.source,
       position
-    );
+    ) as IPosition;
     const token = getTokenAtPosition(document.source.body, positionInDocument);
     const state =
       token.state.kind === "Invalid" ? token.state.prevState : token.state;
