@@ -57,7 +57,10 @@ import {
   isTypeSystemDefinitionNode,
   isTypeSystemExtensionNode,
   GraphQLError,
-  DirectiveLocation
+  DirectiveLocation,
+  GraphQLScalarType,
+  GraphQLUnionType,
+  GraphQLEnumType
 } from "graphql";
 import { highlightNodeForNode } from "./utilities/graphql";
 
@@ -135,6 +138,10 @@ export class GraphQLLanguageProvider {
       token.state.kind === "Invalid" ? token.state.prevState : token.state;
     const typeInfo = getTypeInfo(project.schema, token.state);
 
+    if (!state) {
+      return [];
+    }
+
     if (state.kind === "DirectiveLocation") {
       return DirectiveLocations.map(location => ({
         label: location,
@@ -154,11 +161,27 @@ export class GraphQLLanguageProvider {
       state.kind === "AliasedField"
     ) {
       const parentType = typeInfo.parentType;
-      const parentFields = {
-        ...(parentType.getFields() as {
-          [label: string]: GraphQLField<any, any>;
-        })
-      };
+      if (!parentType) {
+        return [];
+      }
+      const parentFields: {
+        [label: string]: GraphQLField<any, any>;
+      } = {};
+
+      if (!(
+        parentType instanceof GraphQLScalarType ||
+        parentType instanceof GraphQLEnumType ||
+        parentType instanceof GraphQLList ||
+        parentType instanceof GraphQLNonNull ||
+        parentType instanceof GraphQLUnionType
+      )) {
+        Object.assign(parentFields, {
+          ...(parentType.getFields() as {
+            [label: string]: GraphQLField<any, any>;
+          })
+        });
+      }
+
 
       if (isAbstractType(parentType)) {
         parentFields[TypeNameMetaFieldDef.name] = TypeNameMetaFieldDef;
